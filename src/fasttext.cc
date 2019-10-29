@@ -612,11 +612,15 @@ void FastText::trainThread(int32_t threadId) {
       real progress = real(tokenCount_) / (args_->epoch * ntokens);
       real lr = args_->lr * (1.0 - progress);
       if (args_->model == model_name::sup) {
-        localTokenCount += dict_->getLine(ifs, line, labels);
-        supervised(state, lr, line, labels);
+        std::cerr
+            << "Currently only enabling Skipgram\n"
+            << std::endl;
+        exit(EXIT_FAILURE);
       } else if (args_->model == model_name::cbow) {
-        localTokenCount += dict_->getLine(ifs, line, state.rng);
-        cbow(state, lr, line);
+        std::cerr
+            << "Currently only enabling Skipgram\n"
+            << std::endl;
+        exit(EXIT_FAILURE);
       } else if (args_->model == model_name::sg) {
         localTokenCount += dict_->getLine(ifs, line, state.rng);
         skipgram(state, lr, line);

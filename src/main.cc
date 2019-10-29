@@ -20,20 +20,13 @@ void printUsage() {
   std::cerr
       << "usage: fasttext <command> <args>\n\n"
       << "The commands supported by fasttext are:\n\n"
-      << "  supervised              train a supervised classifier\n"
-      << "  quantize                quantize a model to reduce the memory usage\n"
-      << "  test                    evaluate a supervised classifier\n"
-      << "  test-label              print labels with precision and recall scores\n"
-      << "  predict                 predict most likely labels\n"
-      << "  predict-prob            predict most likely labels with probabilities\n"
       << "  skipgram                train a skipgram model\n"
-      << "  cbow                    train a cbow model\n"
-      << "  print-word-vectors      print word vectors given a trained model\n"
-      << "  print-sentence-vectors  print sentence vectors given a trained model\n"
-      << "  print-ngrams            print ngrams given a trained model and word\n"
-      << "  nn                      query for nearest neighbors\n"
-      << "  analogies               query for analogies\n"
-      << "  dump                    dump arguments,dictionary,input/output vectors\n"
+      << std::endl;
+}
+
+void printOnlySkipgram() {
+  std::cerr
+      << "Currently only enabling Skipgram\n"
       << std::endl;
 }
 
@@ -420,28 +413,10 @@ int main(int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
   std::string command(args[1]);
-  if (command == "skipgram" || command == "cbow" || command == "supervised") {
+  if (command == "skipgram") {
     train(args);
-  } else if (command == "test" || command == "test-label") {
-    test(args);
-  } else if (command == "quantize") {
-    quantize(args);
-  } else if (command == "print-word-vectors") {
-    printWordVectors(args);
-  } else if (command == "print-sentence-vectors") {
-    printSentenceVectors(args);
-  } else if (command == "print-ngrams") {
-    printNgrams(args);
-  } else if (command == "nn") {
-    nn(args);
-  } else if (command == "analogies") {
-    analogies(args);
-  } else if (command == "predict" || command == "predict-prob") {
-    predict(args);
-  } else if (command == "dump") {
-    dump(args);
   } else {
-    printUsage();
+    printOnlySkipgram();
     exit(EXIT_FAILURE);
   }
   return 0;
