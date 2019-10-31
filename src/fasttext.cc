@@ -707,6 +707,7 @@ std::shared_ptr<Matrix> FastText::createTrainOutputMatrix() const {
 void FastText::train(const Args& args) {
   args_ = std::make_shared<Args>(args);
   dict_ = std::make_shared<Dictionary>(args_);
+  spell_ = std::make_shared<Dictionary>(args_);
   if (args_->input == "-") {
     // manage expectations
     throw std::invalid_argument("Cannot use stdin for training!");
@@ -718,6 +719,14 @@ void FastText::train(const Args& args) {
   }
   dict_->readFromFile(ifs);
   ifs.close();
+
+  std::ifstream sfs(args_->spell);
+  if (!sfs.is_open()) {
+    throw std::invalid_argument(
+      args_->spell + " cannot be opened for reference as spelling!");
+  }
+  spell_->readFromFile(sfs);
+  sfs.close();
 
   if (!args_->pretrainedVectors.empty()) {
     input_ = getInputMatrixFromFile(args_->pretrainedVectors);

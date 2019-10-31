@@ -123,6 +123,8 @@ void Args::parseArgs(const std::vector<std::string>& args) {
         exit(EXIT_FAILURE);
       } else if (args[ai] == "-input") {
         input = std::string(args.at(ai + 1));
+      } else if (args[ai] == "spell") {
+        spell = std::string(args.at(ai + 1));
       } else if (args[ai] == "-output") {
         output = std::string(args.at(ai + 1));
       } else if (args[ai] == "-lr") {
@@ -215,8 +217,8 @@ void Args::parseArgs(const std::vector<std::string>& args) {
       exit(EXIT_FAILURE);
     }
   }
-  if (input.empty() || output.empty()) {
-    std::cerr << "Empty input or output path." << std::endl;
+  if (input.empty() || spell.empty() || output.empty()) {
+    std::cerr << "Empty input, spell or output path." << std::endl;
     printHelp();
     exit(EXIT_FAILURE);
   }
