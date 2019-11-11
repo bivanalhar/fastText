@@ -372,7 +372,7 @@ void FastText::cbow(
   }
 }
 
-void FastText::skipgram(
+void FastText::skipgram_main(
     Model::State& state,
     real lr,
     const std::vector<int32_t>& line) {
@@ -386,6 +386,16 @@ void FastText::skipgram(
       }
     }
   }
+}
+
+void FastText::skipgram_spell(
+    Model::State& state,
+    real lr,
+    const std::vector<int32_t>& line) {
+  std::uniform_int_distribution<> uniform(1, args_->ws);
+  int32_t boundary = uniform(state.rng);
+  const std::vector<int32_t>& ngrams = dict_->getSubwords(line[0]);
+  model_->update(ngrams, line, 1, lr, state);
 }
 
 std::tuple<int64_t, double, double>
@@ -600,11 +610,16 @@ bool FastText::keepTraining(const int64_t ntokens) const {
 
 void FastText::trainThread(int32_t threadId) {
   std::ifstream ifs(args_->input);
+  std::ifstream sfs(args_->spell);
+
   utils::seek(ifs, threadId * utils::size(ifs) / args_->thread);
+  utils::seek(sfs, threadId * utils::size(sfs) / args_->thread);
 
   Model::State state(args_->dim, output_->size(0), threadId + args_->seed);
 
-  const int64_t ntokens = dict_->ntokens();
+  const int64_t ntokens = dict_->ntokens() + spell_->ntokens();
+  const int64_t ration = dict_->ntokens() / (dict_->ntokens() + spell_->ntokens());
+
   int64_t localTokenCount = 0;
   std::vector<int32_t> line, labels;
   try {
@@ -622,8 +637,13 @@ void FastText::trainThread(int32_t threadId) {
             << std::endl;
         exit(EXIT_FAILURE);
       } else if (args_->model == model_name::sg) {
-        localTokenCount += dict_->getLine(ifs, line, state.rng);
-        skipgram(state, lr, line);
+        if (localTokenCount < ration * args_->lrUpdateRate){
+          localTokenCount += dict_->getLine(ifs, line, state.rng);
+          skipgram_main(state, lr, line);
+        } else {
+          localTokenCount += spell_->getLine(sfs, line, state.rng);
+          skipgram_spell(state, lr, line);
+        };
       }
       if (localTokenCount > args_->lrUpdateRate) {
         tokenCount_ += localTokenCount;
@@ -688,7 +708,7 @@ std::shared_ptr<Matrix> FastText::getInputMatrixFromFile(
 
 std::shared_ptr<Matrix> FastText::createRandomMatrix() const {
   std::shared_ptr<DenseMatrix> input = std::make_shared<DenseMatrix>(
-      dict_->nwords() + args_->bucket, args_->dim);
+      dict_->nwords() + spell_->nwords() + args_->bucket, args_->dim);
   input->uniform(1.0 / args_->dim, args_->thread, args_->seed);
 
   return input;
@@ -696,7 +716,7 @@ std::shared_ptr<Matrix> FastText::createRandomMatrix() const {
 
 std::shared_ptr<Matrix> FastText::createTrainOutputMatrix() const {
   int64_t m =
-      (args_->model == model_name::sup) ? dict_->nlabels() : dict_->nwords();
+      (args_->model == model_name::sup) ? dict_->nlabels() + spell_->nlabels() : dict_->nwords() + spell_->nwords();
   std::shared_ptr<DenseMatrix> output =
       std::make_shared<DenseMatrix>(m, args_->dim);
   output->zero();
@@ -758,7 +778,7 @@ void FastText::startThreads() {
   for (int32_t i = 0; i < args_->thread; i++) {
     threads.push_back(std::thread([=]() { trainThread(i); }));
   }
-  const int64_t ntokens = dict_->ntokens();
+  const int64_t ntokens = dict_->ntokens() + spell_->ntokens();
   // Same condition as trainThread
   while (keepTraining(ntokens)) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
