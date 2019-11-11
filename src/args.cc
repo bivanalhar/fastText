@@ -238,6 +238,7 @@ void Args::printHelp() {
 void Args::printBasicHelp() {
   std::cerr << "\nThe following arguments are mandatory:\n"
             << "  -input              training file path\n"
+            << "  -spell              misspelling file path\n"
             << "  -output             output file path\n"
             << "\nThe following arguments are optional:\n"
             << "  -verbose            verbosity level [" << verbose << "]\n";
